@@ -1,0 +1,12 @@
+{ "_comment": "this file does not contain real API keys, you have to generate your own",
+"twitter":{
+  "api_consumer_key": "AAAAAAAAAA",
+  "api_consumer_secret": "BBBBBBBBBB",
+  "api_access_token": "CCCCCCCCCC",
+  "api_access_token_secret": "DDDDDDDDD"
+},
+"mastodon": {
+  "post_url": "https://botsin.space/api/v1/statuses?access_token=",
+  "api_access_token": "EEEEEEEEEE"
+}
+}

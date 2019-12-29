@@ -1,0 +1,5 @@
+xmltodict
+beautifulsoup4
+twitter
+python-twitter
+requests
