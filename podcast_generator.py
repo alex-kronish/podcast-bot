@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 import json
 import twitter
 import requests
-from twitter.util import unichr
 import markov
 
 
@@ -26,8 +25,8 @@ def twitterpost(inputmsg):
 
 
 def mastoapipost(inputmsg):
-    token = "HZbrVc3S9nFqnY-pz-VO9dtzrKO50ATPL5vSEslEPWc"
-    url = "https://botsin.space/api/v1/statuses?access_token=" + token
+    token = apikeys["mastodon"]["api_access_token"]
+    url = apikeys["mastodon"]["post_url"] + token
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     st = "visibility=public&status=" + inputmsg
     conn = requests.post(url, st, headers=headers)
@@ -61,8 +60,8 @@ def gettitles(urls):
                 tmp2 = re.sub(pattern_b, "", tmp1)
                 tmp3 = re.sub(pattern_c, "", tmp2)
                 tmp4 = re.sub(pattern_d, "", tmp3)
-                tmp5 = re.sub(pattern_e,"",tmp4)
-                tmp6 = re.sub(pattern_f,"",tmp5)
+                tmp5 = re.sub(pattern_e, "", tmp4)
+                tmp6 = re.sub(pattern_f, "", tmp5)
                 titles.append(tmp6)
     return titles
 
@@ -87,7 +86,7 @@ def getdescriptions(urls):
                 # allowed in RSS feeds, lets use bs4 to clean it.
                 soup = BeautifulSoup(d, features="html.parser")
                 tmp = soup.get_text()
-                tmp2 = re.sub("For information regarding your data privacy, visit acast.","",tmp)
+                tmp2 = re.sub("For information regarding your data privacy, visit acast.", "", tmp)
                 descr.append(tmp2)
     return descr
 
@@ -112,7 +111,7 @@ if __name__ == "__main__":
         mkv_title.add_text(t)
     for d in in_desc:
         mkv_desc.add_text(d)
-    for t in range(0,10):
+    for t in range(0, 10):
         final_title = mkv_title.generate_sentence()
     epnum = random.randint(1, 500)
     desc_range = random.randint(3, 7)
@@ -124,3 +123,4 @@ if __name__ == "__main__":
     print(fake_podcast)
     tw = twitterpost(fake_podcast)
     mstdn = mastoapipost(fake_podcast)
+    print(mstdn.content)
