@@ -6,7 +6,6 @@ import json
 import twitter
 import requests
 import markov
-import sys
 
 
 def parseconf(fname):
@@ -37,18 +36,31 @@ def mastoapipost(inputmsg):
 def gettitles(urls):
     # regex to try and strip episode numbers
     # rss/channel/item[]/title
-    pattern_a = "^Episode\s"
-    pattern_b = "^[0-9]+[:-]\s"
-    pattern_c = "^[0-9]+\s[:-]\s"
-    pattern_d = "^MBMBaM [0-9]+:\s"
-    pattern_e = "^Giant Bombcast [0-9]+:\s"
-    pattern_f = "^Giant Bombcast\s"
+    headers = {"Accept": "*/*","User-Agent": "Podcastacular/1.0"}
+    patterns = ["^Episode\s",
+                "^[0-9]+[: -]+\s",
+                "^[0-9]+\s[: -]+\s",
+                "^MBMBaM [0-9]+:\s",
+                "^Giant Bombcast [0-9]+:\s",
+                "^Giant Bombcast\s",
+                "Face 2 Face:\s",
+                "My Brother, My Brother And Me:\s",
+                "The Adventure Zone:\s",
+                "The The Adventure Zone:"
+                "^Run Button Podcast [0-9]+\s[:-]\s",
+                "^RB Podcast [0-9]+[: -]+\s",
+                "^Talking Simpsons -\s",
+                "^[a-zA-Z]+\s[0-9]+[: -]+\s",
+                "[0-9]+[: -]+",
+                ":$",
+                "[a-zA-Z\s]+[0-9]+"]
+
     titles = []
     for u in urls:
-        r = requests.get(u, timeout=25)
+        r = requests.get(u, timeout=25, headers=headers)
         r.encoding = "utf-8"
         if r.status_code != 200:
-            print("Something went wrong connecting to URL: " + u)
+            print("Something went wrong connecting to URL: " + u + ". Got a status code of: " + str(r.status_code))
         else:
             # print(r.content)
             x = xmltodict.parse(r.content)
@@ -58,21 +70,18 @@ def gettitles(urls):
                 ts.append(i["title"])
 
             for t in ts:
-                tmp1 = re.sub(pattern_a, "", t)
-                tmp2 = re.sub(pattern_b, "", tmp1)
-                tmp3 = re.sub(pattern_c, "", tmp2)
-                tmp4 = re.sub(pattern_d, "", tmp3)
-                tmp5 = re.sub(pattern_e, "", tmp4)
-                tmp6 = re.sub(pattern_f, "", tmp5)
-                titles.append(tmp6)
+                for p in patterns:
+                    tmp = re.sub(p, "", t)
+                titles.append(tmp)
     return titles
 
 
 def getdescriptions(urls):
     # rss/channel/item[]/description
     descr = []
+    headers = {"Accept": "*/*", "User-Agent": "Podcastacular/1.0"}
     for u in urls:
-        r = requests.get(u, timeout=25)
+        r = requests.get(u, timeout=25, headers=headers)
         r.encoding = "utf-8"
         if r.status_code != 200:
             print("Something went wrong connecting to URL: " + u)
@@ -87,10 +96,11 @@ def getdescriptions(urls):
             for d in ds:
                 # there could be stray HTML in the description, since line breaks and links and stuff are technically
                 # allowed in RSS feeds, lets use bs4 to clean it.
-                soup = BeautifulSoup(d, features="html.parser")
-                tmp = soup.get_text()
-                tmp2 = re.sub("For information regarding your data privacy, visit acast.", "", tmp)
-                descr.append(tmp2)
+                if d is not None:
+                    soup = BeautifulSoup(d, features="html.parser")
+                    tmp = soup.get_text()
+                    tmp2 = re.sub("For information regarding your data privacy, visit acast.", "", tmp)
+                    descr.append(tmp2)
     return descr
 
 
@@ -102,8 +112,8 @@ def generatepodcaststring(ep, title, descr):
 
 
 if __name__ == "__main__":
-    sourcefeeds = parseconf("rss_sources.json") # feel free to add additional RSS feeds to the list
-    apikeys = parseconf("api_keys_secret.json") # take the provided api_keys.json, fill in your shit, and rename it to api_keys_secret.json
+    sourcefeeds = parseconf("rss_sources.json")
+    apikeys = parseconf("api_keys_secret.json")
     source_titles = []
     source_desc = []
     mkv_title = markov.MarkovChainer(2)
@@ -122,7 +132,7 @@ if __name__ == "__main__":
     for a in range(1, desc_range):
         desc_tmp = mkv_desc.generate_sentence()
         desc_f = desc_f + desc_tmp + " "
-    fake_podcast = generatepodcaststring(epnum, final_title,
+    fake_podcast = generatepodcaststring(epnum, re.sub("[: ,\-.?]$", "!", final_title),
                                          desc_f).encode("latin-1", errors="replace").decode("latin-1", errors="replace")
 
     print(fake_podcast)
@@ -130,4 +140,3 @@ if __name__ == "__main__":
     tw = twitterpost(fake_podcast)
     mstdn = mastoapipost(fake_podcast)
     # print(mstdn.content)
-
