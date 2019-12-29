@@ -6,6 +6,7 @@ import json
 import twitter
 import requests
 import markov
+import sys
 
 
 def parseconf(fname):
@@ -45,6 +46,7 @@ def gettitles(urls):
     titles = []
     for u in urls:
         r = requests.get(u, timeout=25)
+        r.encoding = "utf-8"
         if r.status_code != 200:
             print("Something went wrong connecting to URL: " + u)
         else:
@@ -71,6 +73,7 @@ def getdescriptions(urls):
     descr = []
     for u in urls:
         r = requests.get(u, timeout=25)
+        r.encoding = "utf-8"
         if r.status_code != 200:
             print("Something went wrong connecting to URL: " + u)
         else:
@@ -99,8 +102,8 @@ def generatepodcaststring(ep, title, descr):
 
 
 if __name__ == "__main__":
-    sourcefeeds = parseconf("rss_sources.json")
-    apikeys = parseconf("api_keys.json")
+    sourcefeeds = parseconf("rss_sources.json") # feel free to add additional RSS feeds to the list
+    apikeys = parseconf("api_keys_secret.json") # take the provided api_keys.json, fill in your shit, and rename it to api_keys_secret.json
     source_titles = []
     source_desc = []
     mkv_title = markov.MarkovChainer(2)
@@ -119,8 +122,12 @@ if __name__ == "__main__":
     for a in range(1, desc_range):
         desc_tmp = mkv_desc.generate_sentence()
         desc_f = desc_f + desc_tmp + " "
-    fake_podcast = generatepodcaststring(epnum, final_title, desc_f)
+    fake_podcast = generatepodcaststring(epnum, final_title,
+                                         desc_f).encode("latin-1", errors="replace").decode("latin-1", errors="replace")
+
     print(fake_podcast)
+
     tw = twitterpost(fake_podcast)
     mstdn = mastoapipost(fake_podcast)
-    print(mstdn.content)
+    # print(mstdn.content)
+

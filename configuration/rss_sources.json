@@ -5,5 +5,9 @@
   "http://feeds.feedburner.com/mbmbam?format=xml",
   "http://adventurezone.libsyn.com/rss",
   "http://www.giantbomb.com/feeds/podcast/",
-  "http://rss.acast.com/vicegamingsnewpodcast"
+  "http://rss.acast.com/vicegamingsnewpodcast",
+  "http://feeds.feedburner.com/artofprocess?format=xml",
+  "http://sawbones.libsyn.com/rss",
+  "http://feeds.feedburner.com/thornmorris?format=xml",
+  "http://feeds.feedburner.com/todayinthepast?format=xml"
 ]}
