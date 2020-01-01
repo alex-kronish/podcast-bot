@@ -6,6 +6,7 @@ import json
 import twitter
 import requests
 import markov
+import urllib.parse
 
 
 def parseconf(fname):
@@ -28,7 +29,7 @@ def mastoapipost(inputmsg):
     token = apikeys["mastodon"]["api_access_token"]
     url = apikeys["mastodon"]["post_url"] + token
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    st = "visibility=public&status=" + inputmsg
+    st = "visibility=public&status=" + urllib.parse.quote(inputmsg)
     conn = requests.post(url, st, headers=headers)
     return conn
 
@@ -36,24 +37,38 @@ def mastoapipost(inputmsg):
 def gettitles(urls):
     # regex to try and strip episode numbers
     # rss/channel/item[]/title
-    headers = {"Accept": "*/*","User-Agent": "Podcastacular/1.0"}
-    patterns = ["^Episode\s",
-                "^[0-9]+[: -]+\s",
-                "^[0-9]+\s[: -]+\s",
-                "^MBMBaM [0-9]+:\s",
-                "^Giant Bombcast [0-9]+:\s",
-                "^Giant Bombcast\s",
-                "Face 2 Face:\s",
-                "My Brother, My Brother And Me:\s",
-                "The Adventure Zone:\s",
-                "The The Adventure Zone:"
-                "^Run Button Podcast [0-9]+\s[:-]\s",
-                "^RB Podcast [0-9]+[: -]+\s",
-                "^Talking Simpsons -\s",
-                "^[a-zA-Z]+\s[0-9]+[: -]+\s",
-                "[0-9]+[: -]+",
-                ":$",
-                "[a-zA-Z\s]+[0-9]+"]
+    headers = {"Accept": "*/*", "User-Agent": "Podcastacular/1.0"}
+    patterns = [r"^Episode\s",
+                r"^[0-9]+[: -]+",
+                r"^[0-9]+[: -]+",
+                r"^MBMBaM [0-9]+: ",
+                r"^Giant Bombcast [0-9]+ ",
+                r"^Giant Bombcast ",
+                r"Face 2 Face: ",
+                r"My Brother, My Brother And Me: ",
+                r"The Adventure Zone:\s",
+                r"The The Adventure Zone:"
+                r"^Run Button Podcast [0-9]+\s[:-] ",
+                r"^RB Podcast [0-9]+[: -]+ ",
+                r"^Talking Simpsons - ",
+                r"^[a-zA-Z]+\s[0-9]+[: -]+ ",
+                r"[0-9]+[: -]+",
+                r":$",
+                r"^Talking Simpsons - ",
+                r"^Disenchantment - ",
+                r"^[0-9]+[: -]+",
+                r"^Episode [0-9]+[: -]+",
+                r"^Ep [0-9]+: ",
+                r"^Ep. [0-9]+: "
+                r"^[0-9]+ - "
+                r"\*[Pp][Rr][Ee][Vv][Ii][Ee][Ww]\* ",
+                r"\*Preview\*",
+                r"\*PREVIEW\*",
+                r"^Ep. ",
+                r"^Sawbones: ",
+                r"^Ep. [0-9]+. ",
+                r"^BEST SHOW BESTS #",
+                r"^Best Show Bests #"]
 
     titles = []
     for u in urls:
@@ -70,9 +85,14 @@ def gettitles(urls):
                 ts.append(i["title"])
 
             for t in ts:
+                tmp = t
                 for p in patterns:
-                    tmp = re.sub(p, "", t)
+                    tmp = re.sub(p, "", tmp)
                 titles.append(tmp)
+    # f = open("podcast_titles_sample.txt", "wt")
+    # for items in titles:
+    #    f.write(items + "\n")
+    # f.close()
     return titles
 
 
@@ -104,10 +124,10 @@ def getdescriptions(urls):
     return descr
 
 
-def generatepodcaststring(ep, title, descr):
+def generatepodcaststring(ep, title, descr, service_len):
     output = str(ep) + ": " + title.title() + "\n\n" + descr
-    if len(output) >= 280:
-        output = output[:276] + "..."  # twitter is bad imo
+    if len(output) >= service_len:
+        output = output[:(service_len - 4)] + "..."  # twitter is bad imo
     return output
 
 
@@ -127,16 +147,21 @@ if __name__ == "__main__":
     for t in range(0, 10):
         final_title = mkv_title.generate_sentence()
     epnum = random.randint(1, 500)
-    desc_range = random.randint(3, 7)
+    desc_range = random.randint(3, 5)
     desc_f = ""
     for a in range(1, desc_range):
-        desc_tmp = mkv_desc.generate_sentence()
-        desc_f = desc_f + desc_tmp + " "
-    fake_podcast = generatepodcaststring(epnum, re.sub("[: ,\-.?]$", "!", final_title),
-                                         desc_f).encode("latin-1", errors="replace").decode("latin-1", errors="replace")
+        if len(desc_f) <= 200:
+            desc_tmp = mkv_desc.generate_sentence()
+            desc_f = desc_f + desc_tmp + " "
 
-    print(fake_podcast)
+    desc_f = re.sub(r"@", "", desc_f)
+    final_title = re.sub(r"[: ,\-.?]$", "!", final_title)
+    fake_podcast_m = generatepodcaststring(epnum, final_title, desc_f, 500).encode("latin-1", errors="replace").decode(
+        "latin-1", errors="replace")
+    fake_podcast_t = generatepodcaststring(epnum, final_title, desc_f, 280).encode("latin-1", errors="replace").decode(
+        "latin-1", errors="replace")
+    print(fake_podcast_m)
 
-    tw = twitterpost(fake_podcast)
-    mstdn = mastoapipost(fake_podcast)
+    tw = twitterpost(fake_podcast_t)
+    mstdn = mastoapipost(fake_podcast_m)
     # print(mstdn.content)
