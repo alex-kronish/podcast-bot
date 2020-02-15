@@ -8,6 +8,7 @@ class MarkovChainer(object):
         self.order = order
         self.beginnings = []
         self.freq = {}
+        random.seed(datetime.datetime.utcnow().timestamp())
 
     # pass a string with a terminator to the function to add it to the markov lists.
     def add_sentence(self, string, terminator):
@@ -48,7 +49,6 @@ class MarkovChainer(object):
 
     # Generate the goofy sentences that become your tweet.
     def generate_sentence(self):
-        random.seed(int(datetime.datetime.utcnow().timestamp()))
         res = random.choice(self.beginnings)
         res = res[:]
         if len(res) == self.order:
