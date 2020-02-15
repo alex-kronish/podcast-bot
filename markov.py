@@ -1,5 +1,6 @@
 import random
 import re
+import datetime
 
 
 class MarkovChainer(object):
@@ -47,6 +48,7 @@ class MarkovChainer(object):
 
     # Generate the goofy sentences that become your tweet.
     def generate_sentence(self):
+        random.seed(int(datetime.datetime.utcnow().timestamp()))
         res = random.choice(self.beginnings)
         res = res[:]
         if len(res) == self.order:

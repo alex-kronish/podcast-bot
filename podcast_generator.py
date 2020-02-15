@@ -88,6 +88,9 @@ def gettitles(urls):
                 tmp = t
                 for p in patterns:
                     tmp = re.sub(p, "", tmp)
+                tmp = re.sub(r'[Ff][Ee][Aa][Tt]\.?', "featuring", tmp)
+                tmp = re.sub(r'[Ff][Tt]\.?', "featuring", tmp)
+                tmp = re.sub(r'[Pp][Tt]\.?', "part", tmp)
                 titles.append(tmp)
     # f = open("podcast_titles_sample.txt", "wt")
     # for items in titles:
